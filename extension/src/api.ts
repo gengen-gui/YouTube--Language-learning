@@ -20,19 +20,46 @@ const DEFAULTS: Settings = {
   targetLang: 'zh-CN',
 };
 
+// True only when the chrome.storage API is actually reachable. It can be
+// undefined if the extension was just reloaded/updated while an old content
+// script is still running in an already-open tab ("Extension context
+// invalidated"). In that case the user simply needs to refresh the page.
+function storageAvailable(): boolean {
+  try {
+    return typeof chrome !== 'undefined' && !!chrome.storage && !!chrome.storage.local;
+  } catch {
+    return false;
+  }
+}
+
 export async function getSettings(): Promise<Settings> {
-  const stored = await chrome.storage.local.get(Object.keys(DEFAULTS));
-  return { ...DEFAULTS, ...stored } as Settings;
+  if (!storageAvailable()) return { ...DEFAULTS };
+  try {
+    const stored = await chrome.storage.local.get(Object.keys(DEFAULTS));
+    return { ...DEFAULTS, ...stored } as Settings;
+  } catch {
+    return { ...DEFAULTS };
+  }
 }
 
 export async function setSettings(patch: Partial<Settings>): Promise<void> {
-  await chrome.storage.local.set(patch);
+  if (!storageAvailable()) return;
+  try {
+    await chrome.storage.local.set(patch);
+  } catch {
+    /* context invalidated; ignore */
+  }
 }
 
 export function onSettingsChanged(cb: (s: Settings) => void): void {
-  chrome.storage.onChanged.addListener(async (_changes, area) => {
-    if (area === 'local') cb(await getSettings());
-  });
+  if (!storageAvailable() || !chrome.storage.onChanged) return;
+  try {
+    chrome.storage.onChanged.addListener(async (_changes, area) => {
+      if (area === 'local') cb(await getSettings());
+    });
+  } catch {
+    /* context invalidated; ignore */
+  }
 }
 
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
