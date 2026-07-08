@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "YT Lingo — Learn Languages on YouTube",
+  "version": "0.1.0",
+  "description": "Capture YouTube captions in real time, click any sentence to save it to your cloud vocab book with auto-translation.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "http://localhost:8787/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "YT Lingo"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": ["https://www.youtube.com/*"]
+    }
+  ]
+}

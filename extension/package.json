@@ -1,0 +1,16 @@
+{
+  "name": "yt-lingo-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Learn languages on YouTube: capture captions, click sentences, save to your cloud vocab book.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.0",
+    "@types/chrome": "^0.0.268"
+  }
+}

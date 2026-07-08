@@ -1,0 +1,111 @@
+:root {
+  --brand: #ff4d4f;
+  --bg: #0f0f0f;
+  --panel: #181818;
+  --card: #1f1f1f;
+  --line: #303030;
+  --fg: #f1f1f1;
+  --muted: #9a9a9a;
+  --blue: #69b1ff;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif;
+}
+a { color: var(--blue); cursor: pointer; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--brand); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+input, select, button {
+  font-family: inherit;
+  font-size: 14px;
+}
+input, select {
+  background: #101010;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+button {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.6; cursor: default; }
+button.ghost { background: #2a2a2a; color: var(--fg); font-weight: 500; }
+button.ghost.danger { color: #ff7875; }
+button.ghost.saved { color: #95de64; }
+
+.err { color: #ff7875; font-size: 13px; }
+.muted { color: var(--muted); }
+.center { text-align: center; padding: 48px 16px; }
+
+/* ---- Auth ---- */
+.auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.auth-card { width: 320px; display: flex; flex-direction: column; gap: 10px; }
+.auth-card h1 { margin: 0; font-size: 22px; display: flex; align-items: center; gap: 8px; }
+.auth-card .sub { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+.auth-card .switch { font-size: 13px; color: var(--muted); text-align: center; }
+.auth-card .switch a { margin-left: 6px; }
+
+/* ---- Layout ---- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; background: var(--panel); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 10;
+}
+.brand { font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.tabs { display: flex; gap: 6px; }
+.tabs button { background: transparent; color: var(--muted); font-weight: 500; }
+.tabs button.active { background: #2a2a2a; color: var(--fg); }
+.user { font-size: 13px; color: var(--muted); }
+.user a { margin-left: 10px; }
+main { max-width: 860px; margin: 0 auto; padding: 24px; }
+
+/* ---- Vocab book ---- */
+.book { display: flex; flex-direction: column; gap: 12px; }
+.vocab-text { font-size: 16px; line-height: 1.5; }
+.vocab-trans { color: var(--blue); margin-top: 6px; font-size: 14px; }
+.vocab-meta { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.vocab-meta select { padding: 5px 8px; }
+.vocab-meta button { padding: 5px 12px; font-size: 13px; }
+.vocab-meta a { font-size: 13px; }
+
+/* ---- Study ---- */
+.study { display: flex; flex-direction: column; gap: 16px; }
+.study-bar { display: flex; gap: 10px; padding: 12px; }
+.study-bar input { flex: 1; }
+.study-target { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.study-target select { padding: 5px 8px; }
+.study-video iframe { width: 100%; aspect-ratio: 16 / 9; border: none; border-radius: 12px; }
+.study-video h3 { margin: 10px 0 0; font-size: 16px; }
+.cues { display: flex; flex-direction: column; gap: 4px; }
+.cue {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 12px; border-bottom: 1px solid #1f1f1f;
+}
+.cue:hover { background: #161616; }
+.cue-time { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 44px; }
+.cue-text { flex: 1; font-size: 14px; line-height: 1.5; }
+.cue button { padding: 5px 12px; font-size: 13px; white-space: nowrap; }
+
+.notice { border-color: #7a5b00; background: #241d05; }
+.notice strong { color: #ffd666; }
+.notice p { margin: 8px 0 0; color: #d8c9a0; font-size: 13px; line-height: 1.6; }

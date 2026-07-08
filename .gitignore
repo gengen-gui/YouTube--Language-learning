@@ -1,0 +1,16 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build artifacts are excluded by per-subproject .gitignore,
+# but keep a safety net here.
+**/dist/
+**/node_modules/
