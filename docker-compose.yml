@@ -1,0 +1,43 @@
+services:
+  server:
+    build: ./server
+    image: yt-lingo-server:local
+    container_name: yt-lingo-server
+    restart: unless-stopped
+    environment:
+      # REQUIRED: change this in production
+      JWT_SECRET: ${JWT_SECRET:-please-change-me-to-a-long-random-string}
+      TRANSLATE_PROVIDER: ${TRANSLATE_PROVIDER:-google}
+      DB_PATH: /data/data.db
+      NODE_ENV: production
+    volumes:
+      - server-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8787/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - ytlingo
+
+  web:
+    build: ./web
+    image: yt-lingo-web:local
+    container_name: yt-lingo-web
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    ports:
+      # Open this port to access the web UI from your browser.
+      - "${WEB_PORT:-8080}:80"
+    networks:
+      - ytlingo
+
+networks:
+  ytlingo:
+    driver: bridge
+
+volumes:
+  server-data:
+    # Persistent SQLite database (your vocab data lives here).
