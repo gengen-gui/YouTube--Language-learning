@@ -32,3 +32,22 @@ services:
         value: google
       - key: DATABASE_URL
         sync: false # You paste your Neon connection string here (kept secret)
+
+  # The website (React + Vite) as a free static site. It talks to the backend
+  # above; the /api/* rewrite proxies to it so the browser stays same-origin.
+  - type: web
+    name: yt-lingo-web
+    runtime: static
+    rootDir: web
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    # Proxy API calls to the backend service (keeps the browser same-origin,
+    # avoids CORS, and hides the backend URL from the frontend build).
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://yt-lingo-server.onrender.com/api/*
+      # SPA fallback: any unknown path serves index.html.
+      - type: rewrite
+        source: /*
+        destination: /index.html
