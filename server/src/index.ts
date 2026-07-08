@@ -12,6 +12,11 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
+// Friendly root so visiting the bare domain doesn't show "Cannot GET /".
+app.get('/', (_req, res) =>
+  res.type('text/plain').send('YT Lingo API is running. See /api/health'),
+);
+
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRouter);

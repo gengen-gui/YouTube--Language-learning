@@ -42,11 +42,68 @@
 
 ---
 
-## 快速开始
+## 我是普通用户，只想装扩展用
+
+如果项目维护者已经部署了公网后端并发布了扩展，你**只需 3 步**：
+
+1. 到 [GitHub Releases](https://github.com/gengen-gui/YouTube--Language-learning/releases) 下载最新 `YT-Lingo-Extension.zip` 并解压
+2. 打开 `chrome://extensions/` → 右上角开启「开发者模式」→「加载已解压的扩展程序」→ 选解压后的文件夹
+3. 打开任意 YouTube 视频 → 点扩展图标 → 用邮箱注册 / 登录 → 选目标语言即可
+
+> 这个 Release 版本的扩展**已内置公网后端地址**，无需手动填 API server，装上直接注册就能用。
+
+---
+
+## 快速开始（开发者 / 自己部署）
 
 > 需要 Node.js 18+（后端翻译用到了全局 `fetch`）。
 
-### 🐳 方式一：一键 Docker 自托管（推荐）
+### ☁️ 方式一：部署公网后端到 Fly.io（让任何人都能用，免费）
+
+想让**普通用户下载扩展就能直接注册使用**，就把后端部署到公网。Fly.io 免费额度足够，SQLite 挂持久卷、数据永久保存。
+
+**A. 一次性准备**
+
+```bash
+# 1. 装 Fly CLI（macOS）
+brew install flyctl        # 或: curl -L https://fly.io/install.sh | sh
+
+# 2. 注册 / 登录（会打开浏览器）
+fly auth signup            # 已有账号用 fly auth login
+```
+
+**B. 部署后端**（在 `server/` 目录下）
+
+```bash
+cd server
+
+# 改一个全局唯一的 app 名（编辑 fly.toml 里的 app = "..."），然后：
+fly launch --no-deploy --copy-config --name 你的唯一名字
+
+# 创建 1GB 持久卷存数据库（区域要和 fly.toml 的 primary_region 一致）
+fly volumes create ytlingo_data --size 1 --region iad
+
+# 设置 JWT 密钥（务必随机，勿硬编码）
+fly secrets set JWT_SECRET="$(openssl rand -hex 32)"
+
+# 部署
+fly deploy
+```
+
+部署完成后你会得到一个公网地址，例如 `https://你的名字.fly.dev`。
+访问 `https://你的名字.fly.dev/api/health` 返回 `{"ok":true}` 即成功。
+
+**C. 让发布的扩展默认连这个后端**
+
+到 GitHub 仓库 → **Settings → Secrets and variables → Actions → Variables → New repository variable**：
+- Name：`YT_LINGO_API_BASE`
+- Value：`https://你的名字.fly.dev`
+
+之后每次打 tag（如 `git tag v0.1.0 && git push origin v0.1.0`）触发的构建，都会把这个地址烤进扩展，用户下载 Release 版即插即用。
+
+> 如果你只是想自己本地测，跳过这步，扩展会默认连 `http://localhost:8787`。
+
+### 🐳 方式二：一键 Docker 自托管
 
 最省事，**任何人 fork 之后一条命令拉起**（后端 + 网站 + 持久化数据卷）。
 
@@ -71,7 +128,7 @@ docker compose up -d --build
 
 > **扩展怎么连到自托管后端**：装好扩展后，点图标 → 把 "API server" 改成 `http://localhost:8787`（或你的公网域名）。
 
-### 🛠 方式二：本地源码启动（开发者）
+### 🛠 方式三：本地源码启动（开发者）
 
 #### 1. 启动后端
 
@@ -109,13 +166,7 @@ npm run build             # 产物在 extension/dist/
 6. 点击面板里的任意句子 → 展开后点「★ Save」收藏（会自动翻译并存到你的生词本）
 
 > 开发时可用 `npm run watch` 自动重新构建。
-
-### 📦 方式三：只装扩展，用现成后端
-
-到 [GitHub Releases](https://github.com/gengen-gui/YouTube--Language-learning/releases) 下载最新的 `YT-Lingo-Extension.zip`：
-1. 解压
-2. `chrome://extensions/` → 开启开发者模式 → 加载已解压扩展 → 选解压目录
-3. 装好后在扩展 popup 里把 "API server" 改成你部署的公网后端地址
+> 想让本地构建默认连公网后端：`YT_LINGO_API_BASE=https://你的名字.fly.dev npm run build`。
 
 ---
 

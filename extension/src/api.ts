@@ -7,10 +7,16 @@ export interface Settings {
   targetLang: string;
 }
 
+// Injected at build time by build.mjs (esbuild `define`).
+// Defaults to localhost when built without YT_LINGO_API_BASE.
+declare const __API_BASE__: string;
+const DEFAULT_API_BASE =
+  typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'http://localhost:8787';
+
 const DEFAULTS: Settings = {
   token: null,
   email: null,
-  apiBase: 'http://localhost:8787',
+  apiBase: DEFAULT_API_BASE,
   targetLang: 'zh-CN',
 };
 

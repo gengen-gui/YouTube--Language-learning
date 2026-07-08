@@ -14,7 +14,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=8787
-ENV DB_PATH=/data/data.db
+# NOTE: db.ts reads DB_FILE (not DB_PATH). Point it at the persistent volume.
+ENV DB_FILE=/data/data.db
 # Override at runtime via -e or compose `environment`
 ENV JWT_SECRET=change-me-in-production
 ENV TRANSLATE_PROVIDER=google
@@ -26,8 +27,8 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Built JS
 COPY --from=builder /app/dist ./dist
 
-# Persistent data directory
-RUN mkdir -p /data
+# Persistent data directory (owned by `node` so the non-root process can write)
+RUN mkdir -p /data && chown -R node:node /data
 VOLUME ["/data"]
 
 EXPOSE 8787
