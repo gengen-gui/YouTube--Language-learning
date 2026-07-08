@@ -1,0 +1,32 @@
+# Render Blueprint — deploys the YT Lingo backend as a free Web Service.
+#
+# How to use (no credit card required):
+#   1. Push this repo to GitHub (already done).
+#   2. Create a free Postgres database at https://neon.tech and copy its
+#      connection string (starts with postgres://...).
+#   3. On https://render.com -> New -> Blueprint -> pick this repo.
+#      Render reads this file automatically.
+#   4. When prompted, paste the Neon connection string as DATABASE_URL.
+#      JWT_SECRET is auto-generated.
+#   5. Deploy. You'll get https://<name>.onrender.com
+#
+# The backend uses Postgres when DATABASE_URL is set (data is permanent).
+
+services:
+  - type: web
+    name: yt-lingo-server
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true # Render generates a strong random secret
+      - key: TRANSLATE_PROVIDER
+        value: google
+      - key: DATABASE_URL
+        sync: false # You paste your Neon connection string here (kept secret)

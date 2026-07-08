@@ -1,5 +1,5 @@
 import { Router, type Response } from 'express';
-import { db, type VocabRow } from '../db.js';
+import { dbGet, dbAll, dbRun, type VocabRow } from '../db.js';
 import { authRequired, type AuthedRequest } from '../auth.js';
 import { translate } from '../translate.js';
 
@@ -7,15 +7,16 @@ export const vocabRouter = Router();
 vocabRouter.use(authRequired);
 
 // List current user's vocab, optionally filtered by video_id
-vocabRouter.get('/', (req: AuthedRequest, res: Response) => {
+vocabRouter.get('/', async (req: AuthedRequest, res: Response) => {
   const videoId = req.query.videoId as string | undefined;
   const rows = videoId
-    ? db
-        .prepare('SELECT * FROM vocab WHERE user_id = ? AND video_id = ? ORDER BY created_at DESC')
-        .all(req.userId, videoId)
-    : db
-        .prepare('SELECT * FROM vocab WHERE user_id = ? ORDER BY created_at DESC')
-        .all(req.userId);
+    ? await dbAll<VocabRow>(
+        'SELECT * FROM vocab WHERE user_id = $1 AND video_id = $2 ORDER BY created_at DESC',
+        [req.userId, videoId],
+      )
+    : await dbAll<VocabRow>('SELECT * FROM vocab WHERE user_id = $1 ORDER BY created_at DESC', [
+        req.userId,
+      ]);
   res.json({ items: rows });
 });
 
@@ -46,13 +47,11 @@ vocabRouter.post('/', async (req: AuthedRequest, res: Response) => {
     translation = '';
   }
 
-  const info = db
-    .prepare(
-      `INSERT INTO vocab
-        (user_id, text, translation, target_lang, source_lang, video_id, video_title, start_time, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .run(
+  const info = await dbRun(
+    `INSERT INTO vocab
+      (user_id, text, translation, target_lang, source_lang, video_id, video_title, start_time, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+    [
       req.userId,
       text.trim(),
       translation,
@@ -62,9 +61,10 @@ vocabRouter.post('/', async (req: AuthedRequest, res: Response) => {
       videoTitle || null,
       typeof startTime === 'number' ? startTime : null,
       Date.now(),
-    );
+    ],
+  );
 
-  const row = db.prepare('SELECT * FROM vocab WHERE id = ?').get(info.lastInsertRowid) as VocabRow;
+  const row = await dbGet<VocabRow>('SELECT * FROM vocab WHERE id = $1', [info.lastInsertRowid]);
   res.json({ item: row });
 });
 
@@ -72,27 +72,28 @@ vocabRouter.post('/', async (req: AuthedRequest, res: Response) => {
 vocabRouter.patch('/:id/translate', async (req: AuthedRequest, res: Response) => {
   const id = Number(req.params.id);
   const { targetLang } = req.body || {};
-  const row = db
-    .prepare('SELECT * FROM vocab WHERE id = ? AND user_id = ?')
-    .get(id, req.userId) as VocabRow | undefined;
+  const row = await dbGet<VocabRow>('SELECT * FROM vocab WHERE id = $1 AND user_id = $2', [
+    id,
+    req.userId,
+  ]);
   if (!row) {
     res.status(404).json({ error: 'Not found' });
     return;
   }
   const tl = targetLang || row.target_lang;
   const r = await translate(row.text, tl, row.source_lang || 'auto');
-  db.prepare('UPDATE vocab SET translation = ?, target_lang = ?, source_lang = ? WHERE id = ?').run(
+  await dbRun('UPDATE vocab SET translation = $1, target_lang = $2, source_lang = $3 WHERE id = $4', [
     r.translation,
     tl,
     r.sourceLang,
     id,
-  );
-  const updated = db.prepare('SELECT * FROM vocab WHERE id = ?').get(id) as VocabRow;
+  ]);
+  const updated = await dbGet<VocabRow>('SELECT * FROM vocab WHERE id = $1', [id]);
   res.json({ item: updated });
 });
 
-vocabRouter.delete('/:id', (req: AuthedRequest, res: Response) => {
+vocabRouter.delete('/:id', async (req: AuthedRequest, res: Response) => {
   const id = Number(req.params.id);
-  const info = db.prepare('DELETE FROM vocab WHERE id = ? AND user_id = ?').run(id, req.userId);
+  const info = await dbRun('DELETE FROM vocab WHERE id = $1 AND user_id = $2', [id, req.userId]);
   res.json({ deleted: info.changes });
 });

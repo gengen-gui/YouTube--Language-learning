@@ -58,48 +58,41 @@
 
 > 需要 Node.js 18+（后端翻译用到了全局 `fetch`）。
 
-### ☁️ 方式一：部署公网后端到 Fly.io（让任何人都能用，免费）
+### ☁️ 方式一：部署公网后端到 Render + Neon（免费、无需信用卡，数据永久）
 
-想让**普通用户下载扩展就能直接注册使用**，就把后端部署到公网。Fly.io 免费额度足够，SQLite 挂持久卷、数据永久保存。
+想让**普通用户下载扩展就能直接注册使用**，就把后端部署到公网。
+这套组合完全免费、**不用绑卡**：Render 跑后端，Neon 提供免费 PostgreSQL 存数据（永久不丢）。
+后端代码会**自动检测 `DATABASE_URL`**：设了就用 Postgres（生产），没设就用本地 SQLite（开发/Docker）。
 
-**A. 一次性准备**
+**A. 建免费 Postgres（Neon）**
 
-```bash
-# 1. 装 Fly CLI（macOS）
-brew install flyctl        # 或: curl -L https://fly.io/install.sh | sh
+1. 打开 <https://neon.tech> → 用 GitHub/Google 免费注册（不用绑卡）
+2. 新建一个 Project（Region 选离你近的，比如 Singapore / US East）
+3. 建好后复制 **Connection string**，形如：
+   `postgresql://user:pass@ep-xxx.aws.neon.tech/neondb?sslmode=require`
 
-# 2. 注册 / 登录（会打开浏览器）
-fly auth signup            # 已有账号用 fly auth login
-```
+**B. 部署后端（Render Blueprint，一键）**
 
-**B. 部署后端**（在 `server/` 目录下）
+1. 打开 <https://render.com> → 用 GitHub 免费注册登录（不用绑卡）
+2. 顶部 **New → Blueprint** → 选择你的仓库 `YouTube--Language-learning`
+   （Render 会自动读取仓库根目录的 `render.yaml`）
+3. 点部署时会让你填一个环境变量 **`DATABASE_URL`** → 粘贴上一步 Neon 的连接串
+   （`JWT_SECRET` 会自动随机生成，无需手填）
+4. 点 **Apply / Create**，等 3~5 分钟构建部署
 
-```bash
-cd server
+部署完成后你会得到一个公网地址，例如 `https://yt-lingo-server.onrender.com`。
+访问 `https://yt-lingo-server.onrender.com/api/health` 返回 `{"ok":true}` 即成功。
 
-# 改一个全局唯一的 app 名（编辑 fly.toml 里的 app = "..."），然后：
-fly launch --no-deploy --copy-config --name 你的唯一名字
-
-# 创建 1GB 持久卷存数据库（区域要和 fly.toml 的 primary_region 一致）
-fly volumes create ytlingo_data --size 1 --region iad
-
-# 设置 JWT 密钥（务必随机，勿硬编码）
-fly secrets set JWT_SECRET="$(openssl rand -hex 32)"
-
-# 部署
-fly deploy
-```
-
-部署完成后你会得到一个公网地址，例如 `https://你的名字.fly.dev`。
-访问 `https://你的名字.fly.dev/api/health` 返回 `{"ok":true}` 即成功。
+> ⚠️ Render 免费实例 15 分钟无访问会休眠，下次首个请求需等 ~30 秒唤醒（之后正常）。数据在 Neon，不受休眠影响。
 
 **C. 让发布的扩展默认连这个后端**
 
 到 GitHub 仓库 → **Settings → Secrets and variables → Actions → Variables → New repository variable**：
 - Name：`YT_LINGO_API_BASE`
-- Value：`https://你的名字.fly.dev`
+- Value：你的 Render 地址（如 `https://yt-lingo-server.onrender.com`）
 
-之后每次打 tag（如 `git tag v0.1.0 && git push origin v0.1.0`）触发的构建，都会把这个地址烤进扩展，用户下载 Release 版即插即用。
+然后更新 workflow 的构建步骤读取这个变量（`.github/workflows/build-extension.yml` 的 Build 步骤加 `env: YT_LINGO_API_BASE: ${{ vars.YT_LINGO_API_BASE }}`）。
+之后每次打 tag（`git tag v0.1.0 && git push origin v0.1.0`）触发构建，都会把这个地址烤进扩展，用户下载 Release 版即插即用。
 
 > 如果你只是想自己本地测，跳过这步，扩展会默认连 `http://localhost:8787`。
 
