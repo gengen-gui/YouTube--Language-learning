@@ -30,6 +30,8 @@ jobs:
         run: npx tsc --noEmit
       - name: Build (esbuild)
         working-directory: extension
+        env:
+          YT_LINGO_API_BASE: ${{ vars.YT_LINGO_API_BASE }}
         run: npm run build
       - name: Zip dist/
         working-directory: extension
