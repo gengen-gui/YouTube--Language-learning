@@ -6,6 +6,8 @@ on:
     paths:
       - 'extension/**'
       - '.github/workflows/build-extension.yml'
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -51,4 +53,3 @@ jobs:
         with:
           files: YT-Lingo-Extension.zip
           fail_on_unmatched_files: true
-
